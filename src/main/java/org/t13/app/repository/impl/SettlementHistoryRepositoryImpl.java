@@ -26,6 +26,7 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
     private static final String INSERT_SETTLEMENT_RECORDS = """
             INSERT INTO settlement_history (
                  settlement_id,
+                 transaction_id,
                  lifecycle_id,
                  settlement_date,
                  settlement_amount,
@@ -35,6 +36,7 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
              )
              SELECT\s
                  :settlement_id,
+                 t.transaction_id,
                  :lifecycle_id,
                  :settlement_date,
                  :settlement_amount,
