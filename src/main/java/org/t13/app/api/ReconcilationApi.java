@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.t13.app.entity.Transactions;
+import org.t13.app.model.DashboardSummary;
 import org.t13.app.model.TransactionReport;
 
 import java.util.HashMap;
@@ -20,4 +21,7 @@ public interface ReconcilationApi {
 
     @GetMapping("/transactions/{id}")
     public ResponseEntity<TransactionReport> getTransactionWithSettlements(@PathVariable("id") String id);
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<DashboardSummary> getDashboardSummary();
 }

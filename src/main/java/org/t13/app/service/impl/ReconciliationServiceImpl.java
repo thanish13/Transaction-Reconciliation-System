@@ -3,6 +3,7 @@ package org.t13.app.service.impl;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.t13.app.entity.Transactions;
+import org.t13.app.model.DashboardSummary;
 import org.t13.app.model.NetSettlementReport;
 import org.t13.app.model.SettlementReport;
 import org.t13.app.model.TransactionReport;
@@ -57,5 +58,18 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     @Override
     public TransactionReport getTransactionsById(String id) {
         return TransactionTransformer.transform(transactionsRepository.findById(id).getFirst(), settlementHistoryRepository.findById(id));
+    }
+
+    @Override
+    public DashboardSummary getDashboardSummary() {
+
+        int NO_SETTLEMENT_AFTER_7_DAYS = transactionsRepository.find().stream()
+                .filter(t -> ChronoUnit.DAYS.between(t.getTransactionDate(),
+                                        t.getLastSettlementDate() == null ? LocalDate.now() : t.getLastSettlementDate() ) > 7)
+                .toList().size();
+
+        DashboardSummary dashboardSummary = transactionsRepository.dashboardReport().getFirst();
+        dashboardSummary.setNoSettlementAfter7Days(NO_SETTLEMENT_AFTER_7_DAYS);
+        return dashboardSummary;
     }
 }

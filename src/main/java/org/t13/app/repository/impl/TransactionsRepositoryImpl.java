@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.t13.app.entity.Transactions;
+import org.t13.app.model.DashboardSummary;
 import org.t13.app.model.NetSettlementReport;
 import org.t13.app.repository.TransactionsRepository;
 
@@ -38,6 +39,19 @@ public class TransactionsRepositoryImpl implements TransactionsRepository {
             WHERE t.transaction_id = :transaction_id;
             """;
 
+    private static final String DASHBOARD_QUERY = """
+            SELECT
+                COUNT(*) AS totalTransactions,
+                SUM(CASE WHEN settlement_status = 'PENDING' THEN 1 ELSE 0 END) AS pendingTransactions,
+                SUM(CASE WHEN settlement_status = 'PARTIAL' THEN 1 ELSE 0 END) AS partialSettledTransactions,
+                SUM(CASE WHEN settlement_status = 'FULLY_SETTLED' THEN 1 ELSE 0 END) AS fullySettledTransactions,
+                SUM(CASE WHEN settlement_status = 'OVER_SETTLED' THEN 1 ELSE 0 END) AS overSettledTransactions,
+                SUM(CASE WHEN settlement_status = 'REFUNDED' THEN 1 ELSE 0 END) AS refundedTransactions,
+                SUM(CASE WHEN settlement_status = 'NOT_APPLICABLE' THEN 1 ELSE 0 END) AS notApplicableTransactions,
+                SUM(COALESCE(total_settled_amount,0)) AS totalSettlementAmount
+            FROM transactions
+    """;
+
     public List<Transactions> find() {
         return namedParameterJdbcTemplate.query("select * from transactions",
                 transactionsRowMapper());
@@ -59,6 +73,22 @@ public class TransactionsRepositoryImpl implements TransactionsRepository {
         params.put("transaction_id", netSettlementReport.getTransactionId());
 
         namedParameterJdbcTemplate.update(UPDATE_TRANSACTION_QUERY, params);
+    }
+
+    public List<DashboardSummary> dashboardReport() {
+        return namedParameterJdbcTemplate.query(DASHBOARD_QUERY, (rs, rowNum) ->
+                DashboardSummary.builder()
+                        .totalTransactions(rs.getInt("totalTransactions"))
+                        .pendingTransactions(rs.getInt("pendingTransactions"))
+                        .partialSettledTransactions(rs.getInt("partialSettledTransactions"))
+                        .fullySettledTransactions(rs.getInt("fullySettledTransactions"))
+                        .overSettledTransactions(rs.getInt("overSettledTransactions"))
+                        .refundedTransactions(rs.getInt("refundedTransactions"))
+                        .notApplicableTransactions(rs.getInt("notApplicableTransactions"))
+                        .totalSettlementAmount(rs.getBigDecimal("totalSettlementAmount"))
+                        .lastUpdated(LocalDateTime.now())
+                        .build()
+        );
     }
 
     private RowMapper<Transactions> transactionsRowMapper(){
