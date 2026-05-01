@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @EnableJpaRepositories
-public class TRSApplication {
+public class ReconciliationApplication {
     public static void main(String[] args) {
-        SpringApplication.run(TRSApplication.class, args);
+        SpringApplication.run(ReconciliationApplication.class, args);
     }
 }
