@@ -4,7 +4,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.web.multipart.MultipartFile;
-import org.t13.app.entity.SettlementReport;
+import org.t13.app.model.SettlementReport;
 
 import java.io.InputStreamReader;
 import java.math.BigDecimal;

@@ -1,4 +1,4 @@
-package org.t13.app.entity;
+package org.t13.app.model;
 
 import lombok.*;
 
@@ -21,7 +21,5 @@ public class SettlementReport {
     private BigDecimal settlementAmount;
     private String settlementType;
     private String currency;
-
-    // getters and setters
 }
 

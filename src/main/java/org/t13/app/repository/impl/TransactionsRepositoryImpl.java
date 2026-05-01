@@ -1,9 +1,10 @@
-package org.t13.app.repository;
+package org.t13.app.repository.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.t13.app.entity.Transactions;
+import org.t13.app.repository.TransactionsRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,8 +31,13 @@ public class TransactionsRepositoryImpl implements TransactionsRepository {
                         .status(rs.getString("status"))
                         .settlementStatus(rs.getString("settlement_status"))
                         .totalSettledAmount(BigDecimal.valueOf(rs.getLong("total_settled_amount")))
-//                        .lastSettlementDate(rs.getString("last_settlement_date"). "null" ? LocalDate.now() : LocalDate.parse(rs.getString("last_settlement_date")))
+                        .lastSettlementDate(rs.getDate("last_settlement_date").toLocalDate())
                         .createdAt(LocalDateTime.parse(rs.getString("created_at"),  DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")))
                         .build());
+    }
+
+    @Override
+    public void match() {
+
     }
 }

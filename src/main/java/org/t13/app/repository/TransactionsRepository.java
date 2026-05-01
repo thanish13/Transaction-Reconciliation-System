@@ -9,4 +9,7 @@ import java.util.List;
 public interface TransactionsRepository{
 
     public List<Transactions> findAll();
+
+    public void match();
+
 }

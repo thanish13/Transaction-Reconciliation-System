@@ -11,12 +11,12 @@ import org.t13.app.entity.Transactions;
 import java.util.List;
 
 @RestController
-public interface TRSApi {
+public interface ReconcilationApi {
 
     @GetMapping("/transactions")
     public ResponseEntity<List<Transactions>>transactions();
 
     @PostMapping("/reconcile")
-    public ResponseEntity<List<String>> uploadCsv(@RequestParam("file") MultipartFile file) throws Exception;
+    public ResponseEntity<List<String>> reconcile(@RequestParam("file") MultipartFile file) throws Exception;
 
 }
