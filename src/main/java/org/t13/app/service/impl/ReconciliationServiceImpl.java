@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.t13.app.entity.SettlementHistory;
 import org.t13.app.entity.Transactions;
+import org.t13.app.model.NetSettlementReport;
 import org.t13.app.model.SettlementReport;
 import org.t13.app.repository.SettlementHistoryRepository;
 import org.t13.app.repository.TransactionsRepository;
@@ -29,12 +30,14 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     }
 
     public List<Transactions> getTransactions() {
-        return transactionsRepository.findAll();
+        return transactionsRepository.find();
     }
 
     @Override
     public void reconcile(MultipartFile file) throws Exception {
         List<SettlementReport> reportList = CsvLoader.readCsv(file);
         reportList.forEach(settlementHistoryRepository::updateSettlementHistory);
+        List<NetSettlementReport> netSettlementReports = settlementHistoryRepository.netSettlement();
+        netSettlementReports.forEach(transactionsRepository::updateTransactions);
     }
 }

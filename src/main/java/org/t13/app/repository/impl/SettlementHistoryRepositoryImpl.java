@@ -3,10 +3,12 @@ package org.t13.app.repository.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.t13.app.model.NetSettlementReport;
 import org.t13.app.model.SettlementReport;
 import org.t13.app.repository.SettlementHistoryRepository;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -47,6 +49,19 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
              );
            """;
 
+    private static final String SETTLEMENT_SUMMARY_QUERY = """
+            SELECT s.transaction_id,
+            sum(
+                CASE
+                    WHEN s.settlement_type = 'DEBIT'
+                        THEN s.settlement_amount
+                        ELSE -s.settlement_amount
+                END) AS net_settled_amount,
+            max(s.settlement_date) AS last_settlement_date
+            FROM settlement_history s
+            GROUP BY s.transaction_id
+           """;
+
     public void updateSettlementHistory(SettlementReport settlementReport) {
 
         Map<String, Object> paramMap = new HashMap<>();
@@ -61,5 +76,16 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
         paramMap.put("currency", settlementReport.getCurrency());
 
         namedParameterJdbcTemplate.update(INSERT_SETTLEMENT_RECORDS, paramMap);
+    }
+
+    @Override
+    public List<NetSettlementReport> netSettlement() {
+
+        return namedParameterJdbcTemplate.query(SETTLEMENT_SUMMARY_QUERY, (rs, rowNum) ->
+                NetSettlementReport.builder()
+                        .transactionId(rs.getString("TRANSACTION_ID"))
+                        .netSettledAmount(rs.getBigDecimal("NET_SETTLED_AMOUNT"))
+                        .lastSettlementDate(rs.getDate("LAST_SETTLEMENT_DATE").toLocalDate())
+                        .build());
     }
 }
