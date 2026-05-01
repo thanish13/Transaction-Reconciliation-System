@@ -28,7 +28,6 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
             INSERT INTO settlement_history (
                  settlement_id,
                  lifecycle_id,
-                 transaction_id,
                  settlement_date,
                  settlement_amount,
                  settlement_type,
@@ -38,7 +37,6 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
              SELECT\s
                  :settlement_id,
                  :lifecycle_id,
-                 t.transaction_id,
                  :settlement_date,
                  :settlement_amount,
                  :settlement_type,
@@ -69,6 +67,20 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
             GROUP BY s.transaction_id
            """;
 
+    private static final String COUNT_SETTLEMENT_RECORDS =
+            """
+            SELECT *
+            FROM settlement_history s
+            WHERE (s.settlement_id = :settlement_id)
+            """;
+
+    private static final String SELECT_SETTLEMENT_RECORDS =
+            """
+            SELECT COUNT(*)
+            FROM settlement_history s
+            WHERE (:lifecycle_id IS NOT NULL AND s.lifecycle_id = :lifecycle_id)
+            """;
+
     public void updateSettlementHistory(SettlementReport settlementReport) {
 
         Map<String, Object> paramMap = new HashMap<>();
@@ -96,12 +108,16 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
                         .build());
     }
 
-    public List<SettlementHistory> findById(String id) {
+    public List<SettlementHistory> getSettlementByLifecyle(String lifecycleId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("transaction_id", id);
-        return namedParameterJdbcTemplate.query("select * from settlement_history where transaction_id = :transaction_id",
-                params,
-                settlementRowMapper());
+        params.addValue("lifecycle_id", lifecycleId);
+        return namedParameterJdbcTemplate.query(SELECT_SETTLEMENT_RECORDS, params, settlementRowMapper());
+    }
+
+    public List<SettlementHistory> getSettlementBySettlementId(String settlementId) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("settlement_id", settlementId);
+        return namedParameterJdbcTemplate.query(COUNT_SETTLEMENT_RECORDS, params, settlementRowMapper());
     }
 
     private RowMapper<SettlementHistory> settlementRowMapper() {

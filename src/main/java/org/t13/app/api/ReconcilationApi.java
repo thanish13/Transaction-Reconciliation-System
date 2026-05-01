@@ -17,7 +17,7 @@ public interface ReconcilationApi {
     public ResponseEntity<HashMap<String,List<Transactions>>>transactions();
 
     @PostMapping("/reconcile")
-    public ResponseEntity<List<String>> reconcile(@RequestParam("file") MultipartFile file) throws Exception;
+    public ResponseEntity<?> reconcile(@RequestParam("file") MultipartFile file) throws Exception;
 
     @GetMapping("/transactions/{id}")
     public ResponseEntity<TransactionReport> getTransactionWithSettlements(@PathVariable("id") String id);

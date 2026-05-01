@@ -29,13 +29,13 @@ public class ReconciliationApiImpl implements ReconcilationApi {
     }
 
     @Override
-    public ResponseEntity<List<String>> reconcile(MultipartFile file) {
+    public ResponseEntity<?> reconcile(MultipartFile file) {
         try {
             reconciliationService.reconcile(file);
             return ResponseEntity.accepted().build();
         } catch (Exception e) {
             log.error(e.getMessage());
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(400).body(e.getMessage());
         }
     }
 

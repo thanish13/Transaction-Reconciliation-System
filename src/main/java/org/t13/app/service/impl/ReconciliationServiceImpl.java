@@ -2,6 +2,8 @@ package org.t13.app.service.impl;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.t13.app.api.exception.DuplicateSettlementException;
+import org.t13.app.entity.SettlementHistory;
 import org.t13.app.entity.Transactions;
 import org.t13.app.model.DashboardSummary;
 import org.t13.app.model.NetSettlementReport;
@@ -50,14 +52,21 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     @Override
     public void reconcile(MultipartFile file) throws Exception {
         List<SettlementReport> reportList = CsvLoader.readCsv(file);
-        reportList.forEach(settlementHistoryRepository::updateSettlementHistory);
+        reportList.forEach(r -> {
+            if(!settlementHistoryRepository.getSettlementBySettlementId(r.getSettlementId()).isEmpty()){
+                throw new DuplicateSettlementException("Duplicate settlement id " + r.getSettlementId());
+            }
+            settlementHistoryRepository.updateSettlementHistory(r);
+        });
         List<NetSettlementReport> netSettlementReports = settlementHistoryRepository.netSettlement();
         netSettlementReports.forEach(transactionsRepository::updateTransactions);
     }
 
     @Override
     public TransactionReport getTransactionsById(String id) {
-        return TransactionTransformer.transform(transactionsRepository.findById(id).getFirst(), settlementHistoryRepository.findById(id));
+        Transactions transactions = transactionsRepository.findById(id).getFirst();
+        List<SettlementHistory> settlements = settlementHistoryRepository.getSettlementByLifecyle(transactions.getLifecycleId());
+        return TransactionTransformer.transform(transactions, settlements);
     }
 
     @Override
