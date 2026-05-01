@@ -2,7 +2,7 @@ package org.t13.app.transformer;
 
 import org.t13.app.entity.SettlementHistory;
 import org.t13.app.entity.Transactions;
-import org.t13.app.model.SettlementReport;
+import org.t13.app.model.Settlement;
 import org.t13.app.model.TransactionReport;
 
 import java.util.List;
@@ -23,13 +23,13 @@ public class TransactionTransformer {
                 .transactionDate(transactions.getTransactionDate())
                 .status(transactions.getStatus())
                 .transactionAmount(transactions.getTransactionAmount())
-                .settlementHistories(toSettlement(settlementHistory))
+                .settlements(toSettlement(settlementHistory))
                 .build();
     }
 
-    private static List<SettlementReport> toSettlement(List<SettlementHistory> settlementHistory) {
+    private static List<Settlement> toSettlement(List<SettlementHistory> settlementHistory) {
         return settlementHistory.stream().map(s ->
-            SettlementReport.builder()
+            Settlement.builder()
                     .settlementId(s.getSettlementId())
                     .currency(s.getCurrency())
                     .settlementAmount(s.getSettlementAmount())

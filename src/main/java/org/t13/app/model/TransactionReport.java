@@ -28,5 +28,5 @@ public class TransactionReport {
     private BigDecimal totalSettledAmount = BigDecimal.ZERO;
     private LocalDate lastSettlementDate;
     private LocalDateTime createdAt;
-    private List<SettlementReport> settlementHistories;
+    private List<Settlement> settlements;
 }
