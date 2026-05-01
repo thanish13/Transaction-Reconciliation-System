@@ -12,5 +12,6 @@ public interface TransactionsRepository{
 
     List<Transactions> find();
     void updateTransactions(NetSettlementReport  netSettlementReport);
+    List<Transactions> findById(String id);
 
 }

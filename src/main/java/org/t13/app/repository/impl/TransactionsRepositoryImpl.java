@@ -1,6 +1,8 @@
 package org.t13.app.repository.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.t13.app.entity.Transactions;
@@ -38,20 +40,15 @@ public class TransactionsRepositoryImpl implements TransactionsRepository {
 
     public List<Transactions> find() {
         return namedParameterJdbcTemplate.query("select * from transactions",
-                (rs, rowNum) -> Transactions.builder()
-                        .transactionId(rs.getString("transaction_id"))
-                        .lifecycleId(rs.getString("lifecycle_id"))
-                        .accountId(rs.getString("account_id"))
-                        .merchantName(rs.getString("merchant_name"))
-                        .transactionDate(LocalDate.parse(rs.getString("transaction_date")))
-                        .transactionAmount(BigDecimal.valueOf(rs.getLong("transaction_amount")))
-                        .currency(rs.getString("currency"))
-                        .status(rs.getString("status"))
-                        .settlementStatus(rs.getString("settlement_status"))
-                        .totalSettledAmount(BigDecimal.valueOf(rs.getLong("total_settled_amount")))
-                        .lastSettlementDate(rs.getDate("last_settlement_date").toLocalDate())
-                        .createdAt(LocalDateTime.parse(rs.getString("created_at"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")))
-                        .build());
+                transactionsRowMapper());
+    }
+
+    public List<Transactions> findById(String id) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("transaction_id", id);
+        return namedParameterJdbcTemplate.query("select * from transactions where transaction_id = :transaction_id",
+                params,
+                transactionsRowMapper());
     }
 
     @Override
@@ -62,5 +59,22 @@ public class TransactionsRepositoryImpl implements TransactionsRepository {
         params.put("transaction_id", netSettlementReport.getTransactionId());
 
         namedParameterJdbcTemplate.update(UPDATE_TRANSACTION_QUERY, params);
+    }
+
+    private RowMapper<Transactions> transactionsRowMapper(){
+        return (rs, rowNum) -> Transactions.builder()
+                .transactionId(rs.getString("transaction_id"))
+                .lifecycleId(rs.getString("lifecycle_id"))
+                .accountId(rs.getString("account_id"))
+                .merchantName(rs.getString("merchant_name"))
+                .transactionDate(LocalDate.parse(rs.getString("transaction_date")))
+                .transactionAmount(BigDecimal.valueOf(rs.getLong("transaction_amount")))
+                .currency(rs.getString("currency"))
+                .status(rs.getString("status"))
+                .settlementStatus(rs.getString("settlement_status"))
+                .totalSettledAmount(BigDecimal.valueOf(rs.getLong("total_settled_amount")))
+                .lastSettlementDate(rs.getDate("last_settlement_date") == null ? null : rs.getDate("last_settlement_date").toLocalDate())
+                .createdAt(LocalDateTime.parse(rs.getString("created_at"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")))
+                .build();
     }
 }

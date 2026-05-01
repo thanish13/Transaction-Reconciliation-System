@@ -14,4 +14,6 @@ public interface SettlementHistoryRepository {
     void updateSettlementHistory(SettlementReport settlementReport);
 
     List<NetSettlementReport> netSettlement();
+
+    List<SettlementHistory> findById(String id);
 }

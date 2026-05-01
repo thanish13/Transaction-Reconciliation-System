@@ -1,21 +1,20 @@
 package org.t13.app.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import org.t13.app.entity.SettlementHistory;
 import org.t13.app.entity.Transactions;
 import org.t13.app.model.NetSettlementReport;
 import org.t13.app.model.SettlementReport;
+import org.t13.app.model.TransactionReport;
 import org.t13.app.repository.SettlementHistoryRepository;
 import org.t13.app.repository.TransactionsRepository;
-import org.t13.app.repository.impl.SettlementHistoryRepositoryImpl;
 import org.t13.app.service.ReconciliationService;
+import org.t13.app.transformer.TransactionTransformer;
 import org.t13.app.utils.CsvLoader;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 
 @Component
@@ -29,8 +28,22 @@ public class ReconciliationServiceImpl implements ReconciliationService {
         this.settlementHistoryRepository = settlementHistoryRepository;
     }
 
-    public List<Transactions> getTransactions() {
-        return transactionsRepository.find();
+    public HashMap<String,List<Transactions>> getTransactions() {
+        List<Transactions> redIssues = transactionsRepository.find().stream()
+                .filter(t ->
+                        t.getTotalSettledAmount().compareTo(t.getTransactionAmount()) > 0 ||
+                        ChronoUnit.DAYS.between(t.getTransactionDate(),
+                                t.getLastSettlementDate() == null ? LocalDate.now() : t.getLastSettlementDate() ) > 7)
+                .toList();
+
+        List<Transactions> yellowIssues = transactionsRepository.find().stream()
+                .filter(t -> t.getTotalSettledAmount().compareTo(t.getTransactionAmount()) < 0 ).toList();
+
+        HashMap<String,List<Transactions>> map = new HashMap<>();
+        map.put("redIssues", redIssues);
+        map.put("yellowIssues", yellowIssues);
+
+        return map;
     }
 
     @Override
@@ -39,5 +52,10 @@ public class ReconciliationServiceImpl implements ReconciliationService {
         reportList.forEach(settlementHistoryRepository::updateSettlementHistory);
         List<NetSettlementReport> netSettlementReports = settlementHistoryRepository.netSettlement();
         netSettlementReports.forEach(transactionsRepository::updateTransactions);
+    }
+
+    @Override
+    public TransactionReport getTransactionsById(String id) {
+        return TransactionTransformer.transform(transactionsRepository.findById(id).getFirst(), settlementHistoryRepository.findById(id));
     }
 }

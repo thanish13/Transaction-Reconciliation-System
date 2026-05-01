@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -21,5 +22,6 @@ public class SettlementReport {
     private BigDecimal settlementAmount;
     private String settlementType;
     private String currency;
+    private LocalDateTime processedAt;
 }
 
