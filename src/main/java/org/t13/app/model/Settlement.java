@@ -1,7 +1,6 @@
 package org.t13.app.model;
 
 import lombok.*;
-import org.t13.app.entity.Transactions;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

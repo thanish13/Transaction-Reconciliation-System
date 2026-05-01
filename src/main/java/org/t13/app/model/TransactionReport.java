@@ -1,8 +1,6 @@
 package org.t13.app.model;
 
-import jakarta.persistence.*;
 import lombok.*;
-import org.t13.app.entity.SettlementHistory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

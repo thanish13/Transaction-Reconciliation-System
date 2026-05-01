@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.t13.app.entity.SettlementHistory;
-import org.t13.app.entity.Transactions;
 import org.t13.app.model.NetSettlementReport;
 import org.t13.app.model.SettlementReport;
 import org.t13.app.repository.SettlementHistoryRepository;
@@ -67,16 +66,16 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
             GROUP BY s.transaction_id
            """;
 
-    private static final String COUNT_SETTLEMENT_RECORDS =
+    private static final String SETTLEMENT_RECORDS_BY_SETTLEMENT_ID =
             """
             SELECT *
             FROM settlement_history s
             WHERE (s.settlement_id = :settlement_id)
             """;
 
-    private static final String SELECT_SETTLEMENT_RECORDS =
+    private static final String SETTLEMENT_RECORDS_LIFECYCLE_ID =
             """
-            SELECT COUNT(*)
+            SELECT *
             FROM settlement_history s
             WHERE (:lifecycle_id IS NOT NULL AND s.lifecycle_id = :lifecycle_id)
             """;
@@ -111,13 +110,13 @@ public class SettlementHistoryRepositoryImpl implements SettlementHistoryReposit
     public List<SettlementHistory> getSettlementByLifecyle(String lifecycleId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("lifecycle_id", lifecycleId);
-        return namedParameterJdbcTemplate.query(SELECT_SETTLEMENT_RECORDS, params, settlementRowMapper());
+        return namedParameterJdbcTemplate.query(SETTLEMENT_RECORDS_LIFECYCLE_ID, params, settlementRowMapper());
     }
 
     public List<SettlementHistory> getSettlementBySettlementId(String settlementId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("settlement_id", settlementId);
-        return namedParameterJdbcTemplate.query(COUNT_SETTLEMENT_RECORDS, params, settlementRowMapper());
+        return namedParameterJdbcTemplate.query(SETTLEMENT_RECORDS_BY_SETTLEMENT_ID, params, settlementRowMapper());
     }
 
     private RowMapper<SettlementHistory> settlementRowMapper() {

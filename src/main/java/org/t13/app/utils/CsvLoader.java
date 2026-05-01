@@ -18,9 +18,15 @@ public class CsvLoader {
     public static List<SettlementReport> readCsv(MultipartFile file) throws Exception {
         List<SettlementReport> records = new ArrayList<>();
 
+        CSVFormat format = CSVFormat.Builder.create()
+                .setHeader()                 // treat first row as header
+                .setSkipHeaderRecord(true)    // skip header row in data
+                .setTrim(true)                // trim whitespace
+                .setIgnoreEmptyLines(true)    // skip empty lines
+                .build();
+
         try (CSVParser parser = new CSVParser(
-                new InputStreamReader(file.getInputStream()),
-                CSVFormat.DEFAULT.withFirstRecordAsHeader().withTrim())) {
+                new InputStreamReader(file.getInputStream()), format)) {
 
             for (CSVRecord record : parser) {
                 SettlementReport sh = new SettlementReport();
