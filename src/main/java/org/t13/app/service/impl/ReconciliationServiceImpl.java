@@ -1,34 +1,43 @@
 package org.t13.app.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import org.t13.app.api.exception.DuplicateSettlementException;
 import org.t13.app.entity.SettlementHistory;
 import org.t13.app.entity.Transactions;
 import org.t13.app.model.DashboardSummary;
 import org.t13.app.model.NetSettlementReport;
-import org.t13.app.model.SettlementReport;
 import org.t13.app.model.TransactionReport;
 import org.t13.app.repository.SettlementHistoryRepository;
 import org.t13.app.repository.TransactionsRepository;
 import org.t13.app.service.ReconciliationService;
 import org.t13.app.transformer.TransactionTransformer;
-import org.t13.app.utils.CsvLoader;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 
 @Component
+@Slf4j
 public class ReconciliationServiceImpl implements ReconciliationService {
 
     private final TransactionsRepository transactionsRepository;
     private final SettlementHistoryRepository settlementHistoryRepository;
+    private final JobOperator jobOperator;
+    private final Job job;
 
-    public ReconciliationServiceImpl(TransactionsRepository transactionsRepository, SettlementHistoryRepository settlementHistoryRepository) {
+    public ReconciliationServiceImpl(TransactionsRepository transactionsRepository, SettlementHistoryRepository settlementHistoryRepository, JobOperator jobOperator, Job job) {
         this.transactionsRepository = transactionsRepository;
         this.settlementHistoryRepository = settlementHistoryRepository;
+        this.jobOperator = jobOperator;
+        this.job = job;
     }
 
     public HashMap<String,List<Transactions>> getTransactions() {
@@ -51,13 +60,22 @@ public class ReconciliationServiceImpl implements ReconciliationService {
 
     @Override
     public void reconcile(MultipartFile file) throws Exception {
-        List<SettlementReport> reportList = CsvLoader.readCsv(file);
-        reportList.forEach(r -> {
-            if(!settlementHistoryRepository.getSettlementBySettlementId(r.getSettlementId()).isEmpty()){
-                throw new DuplicateSettlementException("Duplicate settlement id " + r.getSettlementId());
-            }
-            settlementHistoryRepository.updateSettlementHistory(r);
-        });
+
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addString("fileName", file.getOriginalFilename())
+                .addJobParameter("fileStream", file.getInputStream(),InputStream.class)
+                .addLong("time", System.currentTimeMillis()) // uniqueness
+                .toJobParameters();
+
+        log.info("Job parameters : {}", jobParameters);
+        log.info("Job name : {}", job.getName());
+        log.info("File inputStream : {}", file.getInputStream());
+
+        JobExecution jobExecution = jobOperator.start(job, jobParameters);
+
+        log.info("Job executed with id: {}", jobExecution.getId());
+        log.info("Job status : {}", jobExecution.getStatus());
+
         List<NetSettlementReport> netSettlementReports = settlementHistoryRepository.netSettlement();
         netSettlementReports.forEach(transactionsRepository::updateTransactions);
     }

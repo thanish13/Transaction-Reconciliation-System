@@ -17,3 +17,7 @@ spring:
   h2:
     console:
       enabled: true
+
+  batch:
+    job:
+      enabled: false

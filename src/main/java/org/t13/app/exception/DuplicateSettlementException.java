@@ -1,4 +1,4 @@
-package org.t13.app.api.exception;
+package org.t13.app.exception;
 
 public class DuplicateSettlementException extends RuntimeException {
 
