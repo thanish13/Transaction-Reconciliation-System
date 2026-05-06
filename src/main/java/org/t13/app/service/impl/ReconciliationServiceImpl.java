@@ -6,8 +6,15 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
-import org.springframework.context.annotation.Scope;
+import org.springframework.batch.core.launch.support.TaskExecutorJobOperator;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.support.ResourcelessJobRepository;
+import org.springframework.batch.core.repository.support.SimpleJobRepository;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.SyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.multipart.MultipartFile;
 import org.t13.app.entity.SettlementHistory;
 import org.t13.app.entity.Transactions;
@@ -19,11 +26,11 @@ import org.t13.app.repository.TransactionsRepository;
 import org.t13.app.service.ReconciliationService;
 import org.t13.app.transformer.TransactionTransformer;
 
-import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -31,14 +38,14 @@ public class ReconciliationServiceImpl implements ReconciliationService {
 
     private final TransactionsRepository transactionsRepository;
     private final SettlementHistoryRepository settlementHistoryRepository;
-    private final JobOperator jobOperator;
     private final Job job;
+    private final JobOperator jobOperator;
 
-    public ReconciliationServiceImpl(TransactionsRepository transactionsRepository, SettlementHistoryRepository settlementHistoryRepository, JobOperator jobOperator, Job job) {
+    public ReconciliationServiceImpl(TransactionsRepository transactionsRepository, SettlementHistoryRepository settlementHistoryRepository, Job job, JobOperator jobOperator) {
         this.transactionsRepository = transactionsRepository;
         this.settlementHistoryRepository = settlementHistoryRepository;
-        this.jobOperator = jobOperator;
         this.job = job;
+        this.jobOperator = jobOperator;
     }
 
     public HashMap<String,List<Transactions>> getTransactions() {
@@ -60,20 +67,18 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     }
 
     @Override
-    @Scope("request")
+    @RequestScope
     public void reconcile(MultipartFile file) throws Exception {
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addString("fileName", file.getOriginalFilename())
-                .addJobParameter("fileStream", file.getInputStream(),InputStream.class)
+                .addString("UUID", UUID.randomUUID().toString())
                 .addLong("time", System.currentTimeMillis()) // uniqueness
                 .toJobParameters();
 
         log.info("Job parameters : {}", jobParameters);
         log.info("Job name : {}", job.getName());
-        log.info("File inputStream : {}", file.getInputStream());
 
-        JobExecution jobExecution = jobOperator.start(job, jobParameters);
+        JobExecution jobExecution =  jobOperator.start(job, jobParameters);
 
         log.info("Job executed with id: {}", jobExecution.getId());
         log.info("Job status : {}", jobExecution.getStatus());
