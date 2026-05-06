@@ -1,6 +1,7 @@
 package org.t13.app.batch;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.stereotype.Component;
@@ -23,11 +24,13 @@ public class CsvStreamItemWriter implements ItemWriter<SettlementReport> {
     }
 
     @Override
+    @StepScope
     public void write(Chunk<? extends SettlementReport> chunk) throws Exception {
 
-        log.info("Writing settlement report: {}", chunk);
 
         for(SettlementReport item : chunk.getItems()){
+            log.info("Writing settlement report: {}", item.getSettlementId());
+
             settlementHistoryRepository.updateSettlementHistory(item);
         }
 

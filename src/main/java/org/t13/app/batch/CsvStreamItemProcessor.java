@@ -2,6 +2,7 @@ package org.t13.app.batch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 import org.t13.app.model.SettlementReport;
@@ -19,13 +20,15 @@ public class CsvStreamItemProcessor implements ItemProcessor<SettlementReport, S
     }
 
     @Override
+    @StepScope
     public @Nullable SettlementReport process(SettlementReport item) {
 
-        log.info("Processing settlement report: {}", item);
+        log.info("Processing settlement report: {}", item.getSettlementId());
 
         if(!settlementHistoryRepository.getSettlementBySettlementId(item.getSettlementId()).isEmpty()){
             throw new DuplicateSettlementException("Duplicate settlement id " + item.getSettlementId());
         }
+
         return item;
     }
 }

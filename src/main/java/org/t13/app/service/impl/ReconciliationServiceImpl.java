@@ -6,6 +6,7 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.t13.app.entity.SettlementHistory;
@@ -59,6 +60,7 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     }
 
     @Override
+    @Scope("request")
     public void reconcile(MultipartFile file) throws Exception {
 
         JobParameters jobParameters = new JobParametersBuilder()

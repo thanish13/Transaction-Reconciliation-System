@@ -11,6 +11,8 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.web.context.annotation.RequestScope;
 import org.t13.app.batch.CsvStreamItemProcessor;
 import org.t13.app.batch.CsvStreamItemReader;
 import org.t13.app.batch.CsvStreamItemWriter;
@@ -48,6 +50,7 @@ public class BatchConfig {
     }
 
     @Bean
+    @Scope("prototype")
     public Job settlementJob(Step updateTransactionsStep) {
         log.info("Creating settlement job");
         return new JobBuilder("settlementJob", jobRepository)

@@ -17,10 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.t13.app.model.SettlementReport;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -30,11 +27,16 @@ import java.util.Iterator;
 @Slf4j
 public class CsvStreamItemReader implements ItemReader<SettlementReport> {
 
-    @Override
-    @StepScope
-    public @Nullable SettlementReport read() throws Exception {
+    private static Iterator<CSVRecord> records;
 
-        InputStream inputStream = new NullInputStream();
+    @PostConstruct
+    public void init() throws IOException {
+
+        File file = new File("src/main/resources/settlement.csv");
+
+        FileInputStream fis = new FileInputStream(file);
+
+        InputStreamReader inputStream = new InputStreamReader(fis);
 
         log.info("Stream: {} ", inputStream);
 
@@ -45,26 +47,35 @@ public class CsvStreamItemReader implements ItemReader<SettlementReport> {
                 .setIgnoreEmptyLines(true)    // skip empty lines
                 .build();
 
-        Reader reader = new InputStreamReader(inputStream);
-        CSVParser parser = new CSVParser (reader, format);
-        Iterator<CSVRecord> records = parser.iterator();
+        CSVParser parser = new CSVParser(inputStream, format);
+        records = parser.iterator();
 
         log.info("Reading items from CSV file");
-        if(records != null && records.hasNext()) {
+
+    }
+
+    @Override
+    @StepScope
+    public @Nullable SettlementReport read()  {
+
+        if (records.hasNext()) {
             CSVRecord record = records.next();
             SettlementReport settlementReport = new SettlementReport();
             settlementReport.setSettlementId(record.get("settlement_id"));
             settlementReport.setLifecycleId(record.get("lifecycle_id"));
             settlementReport.setAccountId(record.get("account_id"));
             settlementReport.setMerchantName(record.get("merchant_name"));
-            settlementReport.setTransactionDate(LocalDate.parse(record.get("transaction_date"),  DateTimeFormatter.ofPattern("dd-MM-yyyy")));
-            settlementReport.setSettlementDate(LocalDate.parse(record.get("settlement_date"),  DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+            settlementReport.setTransactionDate(LocalDate.parse(record.get("transaction_date"), DateTimeFormatter.ofPattern("dd-MM-yyyy")));
+            settlementReport.setSettlementDate(LocalDate.parse(record.get("settlement_date"), DateTimeFormatter.ofPattern("dd-MM-yyyy")));
             settlementReport.setSettlementAmount(new BigDecimal(record.get("settlement_amount")));
             settlementReport.setSettlementType(record.get("settlement_type"));
             settlementReport.setCurrency(record.get("currency"));
-            log.info("settlementReport {}", settlementReport);
+            log.info("settlementReport {}", settlementReport.getSettlementId());
+
             return settlementReport;
         }
+
         return null;
+
     }
 }
